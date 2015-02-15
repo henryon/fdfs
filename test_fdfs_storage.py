@@ -8,8 +8,11 @@ import os
 import hashlib
 import socket
 import re
+import urllib
 import subprocess
-from subprocess import Popen,PIPE
+#from subprocess import check_output
+#from subprocess import Popen,PIPE
+import urllib2
 print "Get host ip information"
 ip=os.system("ip a s dev bond0|awk '/scope global bond0/{sub(/ .*inet /,\"\",$0);sub(/\/16 brd .*/,\"\",$0);print }'")
 DIR="/usr/local/fastdfs/"
@@ -57,22 +60,56 @@ else:
         print "the fille isn't identify"
         exit
 print "echo check file figure print information"
-f=subprocess.Popen([" curl -I http://%s:28717/fileinfo/%s" % (ip,finame)],stdout=subprocess.PIPE, shell=True)
-f_return=f.wait()
-print f_return
+
+try:
+    ff = urllib2.urlopen('http://%s:28717/fileinfo/%s' % (ip,finame))
+except urllib2.HTTPError, e:
+    print e.code
+
+
+
+#f=subprocess.Popen([" curl -I http://%s:28717/fileinfo/%s" % (ip,finame)],stdout=subprocess.PIPE, shell=True)
+#cc=subprocess.check_output([" curl -I http://%s:28717/fileinfo/%s" % (ip,finame)],stdout=subprocess.PIPE)
+#print cc
+#f_return=f.wait()
+f=ff.getcode() 
+
+
 print "Here========================"
-(fout,ferr)=f.communicate()
-if f_return == 0:
+
+if f == 200:
         print "good, the figure print info is ok"
 else:
         print "the figure print info doesn't OK"
         exit
+
 print "echo check file mediainfo information"
-m=subprocess.Popen([" curl -I -XGET 'http://%s:28717/py/mediainfo?path=%s&fileid=test'" % (ip,finame)],stdout=subprocess.PIPE, shell=True)
-m_return=m.wait()
-(mout,merr)=m.communicate()
-if m_return == 0:
+
+
+print "here okokokokokokokokokokokook"
+print finame
+
+try:
+    #finame=str(finame)
+    #link='http://%s:28717/' % ip +'py/mediainfo?path=%s&fileid=test' % finame
+    #mm=urllib2.urlopen(r'http://%s:28717/py/mediainfo?path=%s\&fileid=test' % (ip,finame))
+    params=urllib.urlencode({'path':'%s' % finame,'fileid':'Test'} )
+
+    print params
+    link="http://%s:28717/py/mediainfo?%s" % (ip,params)
+    #mm=urllib2.urlopen(r"http://%s:28717/py/mediainfo?path=%s&fileid=test" % (ip,finame))
+    mm=urllib2.urlopen(link)
+    #mm=urllib2.urlopen(link)
+
+except urllib2.HTTPError, e:
+    print e.code
+
+m=mm.getcode()
+
+if m == 200:
         print "good, the figure print info is ok"
 else:
         print "the figure print info doesn't OK"
         exit
+
+print "we've finished test the deploy result"
